@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Portfolio - Rebecca Huteson</title>
+    <style>
+        /* Basic reset and page setup */
+        body {
+            margin: 0;
+            overflow: hidden; /* Prevents all scrolling on the body */
+            background-color: white;
+            /* Specify Futura, with fallbacks if Futura is not available */
+            font-family:'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Full viewport height */
+        }
+
+        /* Container for the image reel */
+        .image-reel-container {
+            width: 100vw; /* Full viewport width */
+            height: 600px; /* Fixed height for the image reel */
+            overflow: hidden; /* Hides parts of the reel that are outside the container */
+            position: relative; /* Establishes a positioning context for the absolute positioned reel */
+            top: 0;
+            left: 0;
+        }
+
+        /* The image reel itself, which will scroll */
+        .image-reel {
+            display: flex; /* Arranges images in a horizontal row */
+            height: 100%; /* Takes full height of its container (600px) */
+            /* Width will be dynamically set by JavaScript based on content */
+            position: absolute; /* Allows precise positioning for animation */
+            top: 0;
+            left: 0;
+            /* Animation will be applied by JavaScript */
+        }
+
+        /* Styling for individual images in the reel */
+        .image-reel img {
+            height: 600px; /* Fixed height as per requirement */
+            width: auto;    /* Width adjusts to maintain aspect ratio */
+            object-fit: cover; /* Ensures image covers the 600px height, may crop width */
+            margin-right: 10px; /* Optional: adds a small space between images */
+            flex-shrink: 0; /* Prevents images from shrinking if the container is too narrow */
+        }
+
+        /* Container for the scrolling text bar */
+        .text-scroll-container {
+            width: 100vw; /* Full viewport width */
+            background-color: white;
+            overflow: hidden; /* Hides parts of the text that are outside the container */
+            position: relative; /* For positioning context if needed, though flex handles it here */
+            flex-grow: 1; /* Takes up all remaining vertical space below the image reel */
+            display: flex;
+            align-items: center; /* Vertically centers the text within this bar */
+            justify-content: flex-start; /* Aligns scrolling text to the start for animation */
+        }
+
+        /* The scrolling text element */
+        .text-scroll {
+            display: inline-block; /* Allows transform and respects white-space */
+            white-space: nowrap; /* Keeps all text content on a single line */
+            color: black;
+            text-transform: uppercase; /* ALL CAPS as requested */
+            font-weight: bold;
+            /* Font size will be adjusted by JavaScript */
+            /* Animation will be applied by JavaScript */
+            /* No padding-left here, JS will handle positioning for loop */
+        }
+
+        /* Add a general style for dynamically injected keyframes if needed */
+        @keyframes scrollReel { /* Placeholder, JS will overwrite */
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        @keyframes scrollText { /* Placeholder, JS will overwrite */
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="image-reel-container">
+        <div class="image-reel" id="imageReel">
+            <img src="images/zombiebaby.png" alt="Zombie Baby1">
+            <img src="images/algaeelephant.png" alt="Portfolio Image 2">
+            <img src="images/giant.png" alt="Portfolio Image 3">
+            <img src="images/hanging.png" alt="Portfolio Image 4">
+            <img src="images/moonlanding.png" alt="Portfolio Image 5">
+            <img src="images/putin.jpeg" alt="Zombie Baby1">
+            <img src="images/squiddoctor.png" alt="Portfolio Image 2">
+            <img src="images/squidwoman.png" alt="Portfolio Image 3">
+            <img src="images/toplesstrump.jpeg" alt="Portfolio Image 5">
+            <img src="images/trollbutton.png" alt="Portfolio Image 2">
+            <img src="images/zombiebaby2.png" alt="Portfolio Image 3">
+            <img src="images/zombiecuterie.png" alt="Portfolio Image 4">
+            <img src="images/emvm.png" alt="Portfolio Image 2">
+            <img src="images/tsvm.png" alt="Portfolio Image 3">
+            <img src="images/unholyunion.png" alt="Portfolio Image 4">
+            </div>
+    </div>
+
+    <div class="text-scroll-container" id="textContainer">
+        <div class="text-scroll" id="textScroll">
+            <span>THE AI IMAGE GENERATION PORTFOLIO of REBECCA HUTESON - FOR MORE INFORMATION REGARDING AVAILABILITY AND PROMPTING PLEASE EMAIL REBECCAJANEHUTESON@GMAIL.COM</span>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const imageReel = document.getElementById('imageReel');
+            const textScroll = document.getElementById('textScroll');
+            const textContainer = document.getElementById('textContainer'); // For sizing text
+            const originalTextSpan = textScroll.querySelector('span');
+
+            const animationDuration = 90; // Seconds for one full scroll loop - adjust for speed
+
+            // --- Image Reel Setup ---
+            if (imageReel) {
+                const originalImages = Array.from(imageReel.getElementsByTagName('img'));
+                if (originalImages.length > 0) {
+                    // Clone images for seamless loop
+                    originalImages.forEach(img => {
+                        const clone = img.cloneNode(true);
+                        imageReel.appendChild(clone);
+                    });
+
+                    // Calculate total width of the original set of images
+                    // This needs to happen after images are potentially loaded to get correct offsetWidth
+                    let firstSetImageWidth = 0;
+                    let imagesLoaded = 0;
+
+                    function calculateAndSetImageAnimation() {
+                        firstSetImageWidth = 0; // Recalculate
+                        originalImages.forEach(img => {
+                            firstSetImageWidth += img.offsetWidth + parseInt(getComputedStyle(img).marginRight || '0');
+                        });
+
+                        if (firstSetImageWidth > 0) {
+                             // Set the total width of the image-reel element (original + clones)
+                            imageReel.style.width = (firstSetImageWidth * 2) + 'px';
+
+                            // Dynamically create and inject keyframes for image reel
+                            const keyframesReelName = 'scrollReelAnim';
+                            const keyframesReelCSS = `
+                                @keyframes ${keyframesReelName} {
+                                    0% { transform: translateX(0); }
+                                    100% { transform: translateX(-${firstSetImageWidth}px); }
+                                }`;
+                            
+                            const styleEl = document.createElement('style');
+                            document.head.appendChild(styleEl);
+                            styleEl.sheet.insertRule(keyframesReelCSS, 0);
+                            
+                            imageReel.style.animation = `${keyframesReelName} ${animationDuration}s linear infinite`;
+                        }
+                    }
+
+                    // Initial calculation attempt
+                    calculateAndSetImageAnimation();
+                    
+                    // Recalculate on window resize as image auto-widths might change if not strictly fixed by aspect ratio
+                    // and object-fit:cover. However, with fixed height 600px, this should be stable.
+                    // More importantly, ensure calculation runs after images have rendered.
+                    window.addEventListener('load', calculateAndSetImageAnimation); // Ensure all assets are loaded
+                    window.addEventListener('resize', calculateAndSetImageAnimation); // Recalculate on resize
+                }
+            }
+
+            // --- Text Scroll Setup ---
+            if (textScroll && originalTextSpan) {
+                const baseText = originalTextSpan.innerText;
+                // Add a few copies to ensure it fills and loops smoothly, especially on wide screens
+                // Add some spacing between repetitions for clarity
+                const spacing = "\u00A0\u00A0\u00A0\u00A0|\u00A0\u00A0\u00A0\u00A0"; 
+                textScroll.innerHTML = ''; // Clear initial span
+
+                // Determine how many repetitions are needed. At least 2 for looping.
+                // More if a single instance is shorter than the viewport.
+                let tempTextContent = baseText;
+                textScroll.appendChild(document.createTextNode(tempTextContent)); // First instance
+                
+                // Add more instances until the textScroll width is at least 2x viewport or a substantial width
+                // This is a heuristic for good looping.
+                while (textScroll.offsetWidth < window.innerWidth * 2 && textScroll.children.length < 10) { // Cap at 10 to be safe
+                    const newSpan = document.createElement('span');
+                    newSpan.textContent = spacing + baseText;
+                    textScroll.appendChild(newSpan);
+                }
+                // Ensure at least two for the basic loop mechanism if above didn't trigger enough
+                if (textScroll.querySelectorAll('span, #textScroll > textNode').length < 2 && textScroll.firstChild) {
+                     const newSpan = document.createElement('span');
+                     newSpan.textContent = spacing + baseText;
+                     textScroll.appendChild(newSpan);
+                }
+
+
+                function setupTextAnimation() {
+                    // Calculate width of the first logical segment (original text + one spacer)
+                    // This is what needs to scroll out of view for the loop.
+                    let scrollDistanceText = 0;
+                    if (textScroll.firstChild && textScroll.firstChild.nodeType === Node.TEXT_NODE) {
+                         // Create a temporary span to measure the first text node if it exists
+                        const tempMeasureSpan = document.createElement('span');
+                        tempMeasureSpan.style.visibility = 'hidden';
+                        tempMeasureSpan.style.whiteSpace = 'nowrap';
+                        tempMeasureSpan.textContent = textScroll.firstChild.textContent;
+                        document.body.appendChild(tempMeasureSpan);
+                        scrollDistanceText = tempMeasureSpan.offsetWidth;
+                        document.body.removeChild(tempMeasureSpan);
+
+                        // Add width of the first actual span (which includes spacer)
+                        if (textScroll.children[0]) {
+                             scrollDistanceText += textScroll.children[0].offsetWidth;
+                        }
+
+                    } else if (textScroll.children[0]) { // If first child is already a span
+                        scrollDistanceText = textScroll.children[0].offsetWidth;
+                    }
+
+
+                    if (scrollDistanceText > 0) {
+                        const keyframesTextName = 'scrollTextAnim';
+                        const keyframesTextCSS = `
+                            @keyframes ${keyframesTextName} {
+                                0% { transform: translateX(0); }
+                                100% { transform: translateX(-${scrollDistanceText}px); }
+                            }`;
+                        
+                        // Check if style element for keyframes already exists, or create one
+                        let styleEl = document.getElementById('dynamicKeyframes');
+                        if (!styleEl) {
+                            styleEl = document.createElement('style');
+                            styleEl.id = 'dynamicKeyframes';
+                            document.head.appendChild(styleEl);
+                        }
+                        // Clear previous rules if any, or add specific logic to update/remove old keyframes
+                        // For simplicity here, we might add multiple if not careful.
+                        // A better way is to manage the specific rule if it exists.
+                        // For this example, let's ensure we use a fresh style element or clear it.
+                        // styleEl.innerHTML = ''; // Clears all rules in this specific style tag
+                        
+                        // Safest: create a new style element each time or manage rules carefully.
+                        // Let's use the same one as images if it exists, or create a new one.
+                        let animationStyleEl = document.querySelector('style[data-animation-rules]');
+                        if (!animationStyleEl) {
+                            animationStyleEl = document.createElement('style');
+                            animationStyleEl.setAttribute('data-animation-rules', 'true');
+                            document.head.appendChild(animationStyleEl);
+                        }
+                        
+                        // Add new rule (this might duplicate if not careful, but modern browsers handle re-declaration)
+                        try {
+                            // Find and delete existing rule if it has the same name
+                            for (let i = 0; i < animationStyleEl.sheet.cssRules.length; i++) {
+                                if (animationStyleEl.sheet.cssRules[i].name === keyframesTextName) {
+                                    animationStyleEl.sheet.deleteRule(i);
+                                    break;
+                                }
+                            }
+                            animationStyleEl.sheet.insertRule(keyframesTextCSS, animationStyleEl.sheet.cssRules.length);
+                        } catch (e) {
+                             console.warn("Failed to insert/update CSS rule for text scroll: ", e);
+                             // Fallback: append a new style tag (less ideal for updates)
+                             const newStyleTag = document.createElement('style');
+                             newStyleTag.textContent = keyframesTextCSS;
+                             document.head.appendChild(newStyleTag);
+                        }
+                        
+                        textScroll.style.animation = `${keyframesTextName} ${animationDuration}s linear infinite`;
+                    }
+                }
+                
+
+                // Adjust font size of text to fill most of the bottom bar
+                function adjustTextSize() {
+                    if (!textContainer || !textScroll) return;
+                    let currentFontSize = 5; // Start with a reasonable vw
+                    textScroll.style.fontSize = currentFontSize + 'vw';
+
+                    // Iteratively adjust font size
+                    // Aim for text height to be around 60-70% of the container height
+                    const maxHeight = textContainer.offsetHeight * 0.70;
+                    const minHeight = textContainer.offsetHeight * 0.40;
+
+                    // Decrease if too tall
+                    while (textScroll.offsetHeight > maxHeight && currentFontSize > 0.5) {
+                        currentFontSize -= 0.1;
+                        textScroll.style.fontSize = currentFontSize + 'vw';
+                    }
+                    // Increase if too short (but don't make it excessively large)
+                    while (textScroll.offsetHeight < minHeight && currentFontSize < 10) {
+                         currentFontSize += 0.1;
+                        textScroll.style.fontSize = currentFontSize + 'vw';
+                         if (textScroll.offsetHeight > maxHeight) { // Overshot
+                             currentFontSize -= 0.1;
+                             textScroll.style.fontSize = currentFontSize + 'vw';
+                             break;
+                         }
+                    }
+                    // After adjusting font size, re-setup animation as widths change
+                    setupTextAnimation();
+                }
+
+                adjustTextSize(); // Initial call
+                window.addEventListener('resize', adjustTextSize); // Adjust on resize
+                window.addEventListener('load', adjustTextSize); // Adjust after everything is loaded
+
+                // Optional: Pause animation on hover for text
+                textScroll.addEventListener('mouseenter', () => textScroll.style.animationPlayState = 'paused');
+                textScroll.addEventListener('mouseleave', () => textScroll.style.animationPlayState = 'running');
+            }
+
+            // Optional: Pause image animation on hover
+            if (imageReel) {
+                imageReel.addEventListener('mouseenter', () => imageReel.style.animationPlayState = 'paused');
+                imageReel.addEventListener('mouseleave', () => imageReel.style.animationPlayState = 'running');
+            }
+        });
+    </script>
+
+</body>
+</html>
